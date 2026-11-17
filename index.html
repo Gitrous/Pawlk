@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>PaseoYa – Paseos para tu perro</title>
 <style>
-:root{--bg:#f4faf5;--card:#fff;--ink:#16301f;--mut:#5d7565;--pri:#2e9e55;--pri2:#1f7a41;--soft:#dff3e5;--line:#d3e6d9;--warn:#e8a33d;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{--bg:#f4faf5;--card:#fff;--ink:#16301f;--mut:#5d7565;--pri:#2e9e55;--pri2:#1f7a41;--soft:#dff3e5;--line:#d3e6d9;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1a12;--card:#16261c;--ink:#e6f4ea;--mut:#9ab5a2;--pri:#3dbb6a;--pri2:#2e9e55;--soft:#1d3a28;--line:#27402f}}
 :root[data-theme="dark"]{--bg:#0e1a12;--card:#16261c;--ink:#e6f4ea;--mut:#9ab5a2;--pri:#3dbb6a;--pri2:#2e9e55;--soft:#1d3a28;--line:#27402f}
 *{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
@@ -23,7 +23,7 @@ label{font-size:12px;font-weight:700;color:var(--mut);display:block;margin-botto
 input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;width:100%}
 .bar>div{flex:1;min-width:130px}
 .btn{background:var(--pri);color:#fff;border:0;border-radius:12px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer}
-.btn:hover{background:var(--pri2)}.btn.alt{background:var(--soft);color:var(--pri2)}
+.btn:hover{background:var(--pri2)}.btn.alt{background:var(--soft);color:var(--pri2)}.btn.red{background:#e5484d}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;cursor:pointer;position:relative}
 .media{aspect-ratio:4/3;background:linear-gradient(135deg,var(--soft),var(--pri));display:flex;align-items:center;justify-content:center;font-size:64px;overflow:hidden}
@@ -33,109 +33,170 @@ input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:
 .tag.no{background:#fbeccf;color:#8a5a0a}
 .fav{position:absolute;top:8px;right:8px;background:var(--card);border:0;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;max-width:560px}
-.panel .row{margin-bottom:12px}
+.row{margin-bottom:12px}
 .modal{position:fixed;inset:0;background:#0007;display:none;align-items:center;justify-content:center;z-index:20;padding:16px}
 .modal.on{display:flex}.modal>div{background:var(--card);border-radius:20px;max-width:520px;width:100%;max-height:90vh;overflow:auto}
 .modal .media{aspect-ratio:16/10}.modal .body{padding:16px}
 .thumbs{display:flex;gap:6px;overflow-x:auto;padding:8px 16px 0}.thumbs>*{width:56px;height:56px;border-radius:8px;object-fit:cover;cursor:pointer;flex:none}
-.note{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--pri);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.note{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--pri);border-radius:12px;padding:10px 12px;margin-bottom:8px;cursor:pointer}
 .empty{color:var(--mut);padding:30px;text-align:center}
+.msgs{display:flex;flex-direction:column;gap:6px;max-height:340px;overflow:auto;padding:8px 0}
+.m{max-width:80%;padding:8px 12px;border-radius:14px;background:var(--soft)}.m.me{align-self:flex-end;background:var(--pri);color:#fff}.m.sys{align-self:center;background:none;color:var(--mut);font-size:13px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--pri2);color:#fff;padding:10px 16px;border-radius:12px;display:none;z-index:30}
 </style>
 </head>
 <body>
-<header>
-<span class="logo">🐾 PaseoYa</span>
-<nav id="nav"></nav>
-</header>
+<header><span class="logo">🐾 PaseoYa</span><nav id="nav"></nav></header>
 <main id="app"></main>
 <div class="modal" id="modal"><div id="mbody"></div></div>
 <div class="toast" id="toast"></div>
 <script>
 const $=s=>document.querySelector(s);
-const SAMPLE=[
-{id:'s1',name:'Luna',breed:'Labrador',owner:'Marta',zone:'Santa Catalina',from:'2026-11-18',to:'2026-11-20',avail:true,notes:'Muy cariñosa, tira poco de la correa. Necesita 45 min.',emoji:'🐕'},
-{id:'s2',name:'Toby',breed:'Beagle',owner:'Jordi',zone:'Portixol',from:'2026-11-19',to:'2026-11-19',avail:true,notes:'Mucha energía. Le encanta olfatear.',emoji:'🐶'},
-{id:'s3',name:'Nala',breed:'Border Collie',owner:'Carla',zone:'El Terreno',from:'',to:'',avail:true,notes:'Disponible cualquier tarde.',emoji:'🦮'},
-{id:'s4',name:'Rocky',breed:'Bulldog francés',owner:'Pau',zone:'Son Armadans',from:'2026-11-22',to:'2026-11-24',avail:false,notes:'Paseos cortos, no soporta el calor.',emoji:'🐩'},
-{id:'s5',name:'Kira',breed:'Husky',owner:'Ana',zone:'Palma centro',from:'2026-11-21',to:'2026-11-23',avail:false,notes:'Necesita paseo largo y activo.',emoji:'🐺'}];
-[[3,7,12],[2,5,9],[4,8,14],[3,6,10],[5,10,18]].forEach((p,i)=>Object.assign(SAMPLE[i],{p10:p[0],p30:p[1],p60:p[2]}));
-let S={dogs:[],favs:[],alerts:[],notes:[],tab:'home',fd:'',fz:''};
-function load(){try{const j=JSON.parse(localStorage.getItem('paseoya')||'null');if(j)S={...S,...j}}catch(e){}
- const mine=S.dogs.filter(d=>d.mine);S.dogs=[...mine,...SAMPLE.map(d=>({...d,...(S.dogs.find(x=>x.id===d.id)||{})}))]}
-function save(){try{localStorage.setItem('paseoya',JSON.stringify({dogs:S.dogs.map(d=>({...d,vids:undefined})),favs:S.favs,alerts:S.alerts,notes:S.notes}))}catch(e){}}
-function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',2200)}
-function notify(msg){S.notes.unshift({msg,t:new Date().toLocaleString('es-ES')});save();toast('🔔 '+msg);
- try{if('Notification' in window&&Notification.permission==='granted')new Notification('PaseoYa',{body:msg})}catch(e){}render()}
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let db,user,assets,me,ME={favs:[],alerts:[],notes:[]},dogs=[],reqs=[],msgs=[],names={},tab='home',cur=null,fd='',fz='',first=true,firstR=true,prev={},pst={};
+const PP='data/users/';
+const dn=id=>names[id]||'Vecino';
 const fmt=d=>d?new Date(d+'T00:00').toLocaleDateString('es-ES',{day:'numeric',month:'short'}):'';
 const dates=d=>d.from?(d.to&&d.to!==d.from?fmt(d.from)+' – '+fmt(d.to):fmt(d.from)):'Sin fecha fija';
-function media(d,big){const p=(d.imgs&&d.imgs[0]);const v=(d.vids&&d.vids[0]);
- if(v&&!p&&big)return `<video src="${v}" controls playsinline></video>`;
- return p?`<img src="${p}" alt="${d.name}">`:`<span>${d.emoji||'🐕'}</span>`}
 const eur=n=>(n===''||n==null)?'–':n+' €';
-const price=d=>`${eur(d.p10)} / 10 min · ${eur(d.p30)} / 30 min · ${eur(d.p60)} / 1 h`;
-function card(d){const f=S.favs.includes(d.id);
- return `<div class="card" onclick="openDog('${d.id}')"><div class="media">${media(d)}</div>
- <button class="fav" onclick="event.stopPropagation();toggleFav('${d.id}')" title="Favorito">${f?'💚':'🤍'}</button>
- <div class="info"><b>${d.name}</b> · ${d.breed}<div>📍 ${d.zone} · 👤 ${d.owner}</div><div>📅 ${dates(d)}</div><div>💶 desde ${eur(d.p10)} / 10 min</div>
- <span class="tag ${d.avail?'':'no'}">${d.avail?'Disponible para paseo':'No disponible aún'}</span></div></div>`}
-function toggleFav(id){const i=S.favs.indexOf(id);if(i<0){S.favs.push(id);if(!S.alerts.includes(id))S.alerts.push(id);toast('Guardado en favoritos · te avisaremos 🔔')}else{S.favs.splice(i,1)}save();render()}
-function toggleAlert(id){const i=S.alerts.indexOf(id);i<0?S.alerts.push(id):S.alerts.splice(i,1);save();render();
+function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',2400)}
+const sp=()=>{try{db.doc(PP+me+'/prefs').set(ME).catch(()=>{})}catch(e){}};
+function push(m){ME.notes.unshift({msg:m,t:new Date().toLocaleString('es-ES')});ME.notes=ME.notes.slice(0,30);sp();toast('🔔 '+m);
+ try{if(Notification.permission==='granted')new Notification('PaseoYa',{body:m})}catch(e){}render()}
+async function init(){
+ try{user=await claude.use('user');db=await claude.use('db');assets=await claude.use('assets')}catch(e){}
+ if(!db||!user){render();return}
+ me=await user.id();
+ db.doc(PP+me+'/prefs').onSnapshot(s=>{ME={favs:[],alerts:[],notes:[],...(s.exists?s.data():{})};render()},()=>{});
+ db.collection('dogs').onSnapshot(s=>{
+  s.docChanges().forEach(c=>{if(c.type==='removed')return;const d=c.doc.data(),id=c.doc.id,ok=d.avail&&!d.booked;
+   if(!first&&c.type==='modified'&&ok&&prev[id]===false&&ME.alerts.includes(id)&&d.ownerId!==me)push('¡'+d.name+' ya está disponible para pasear!');
+   prev[id]=!!ok});
+  first=false;dogs=s.docs.map(x=>({id:x.id,...x.data()}));loadNames()},()=>{});
+ db.collection('requests').onSnapshot(s=>{
+  s.docChanges().forEach(c=>{if(c.type==='removed')return;const r=c.doc.data(),id=c.doc.id,mine=r.ownerId===me||r.walkerId===me;
+   if(!firstR&&mine&&r.by!==me){
+    if(c.type==='added'&&r.ownerId===me)push(dn(r.walkerId)+' quiere pasear a '+r.dogName);
+    if(c.type==='modified'&&pst[id]&&pst[id]!==r.status){const o=dn(r.ownerId===me?r.walkerId:r.ownerId);
+     push(r.status==='accepted'?'¡'+o+' aceptó el paseo de '+r.dogName+'!':r.status==='rejected'?o+' rechazó la solicitud de '+r.dogName:o+' canceló el paseo de '+r.dogName)}}
+   pst[id]=r.status});
+  firstR=false;reqs=s.docs.map(x=>({id:x.id,...x.data()}));loadNames()},()=>{});
+ db.collection('msgs').onSnapshot(s=>{
+  s.docChanges().forEach(c=>{if(c.type!=='added')return;const m=c.doc.data();if(c.type==='added'&&!first&&!m.sys&&m.from!==me&&Date.now()-m.t<15000){const r=reqs.find(x=>x.id===m.req);if(r&&(r.ownerId===me||r.walkerId===me)&&!m.first)push(dn(m.from)+': '+m.text)}});
+  msgs=s.docs.map(x=>({id:x.id,...x.data()}));render()},()=>{});
+}
+async function loadNames(){
+ const ids=[...new Set([me,...dogs.map(d=>d.ownerId),...reqs.map(r=>r.walkerId)])].filter(i=>i&&!names[i]);
+ if(ids.length){try{const p=await user.profiles(ids);ids.forEach(i=>names[i]=(p[i]&&p[i].name)||'Vecino')}catch(e){}}
+ render()}
+function fav(id){const i=ME.favs.indexOf(id);if(i<0){ME.favs.push(id);ME.alerts.push(id);toast('Guardado · te avisaremos 🔔')}else{ME.favs.splice(i,1);ME.alerts=ME.alerts.filter(x=>x!==id)}sp();render()}
+function alrt(id){const i=ME.alerts.indexOf(id);i<0?ME.alerts.push(id):ME.alerts.splice(i,1);sp();render();
  if(i<0&&'Notification' in window&&Notification.permission==='default')Notification.requestPermission()}
-function setAvail(id,v){const d=S.dogs.find(x=>x.id===id);d.avail=v;save();
- if(v&&S.alerts.includes(id))notify(`¡${d.name} ya está disponible para pasear! ${dates(d)}`);else render()}
-function openDog(id){const d=S.dogs.find(x=>x.id===id);const f=S.favs.includes(id);
- const th=[...(d.imgs||[]).map((s,i)=>`<img src="${s}" onclick="setBig('${id}',${i},0)">`),...(d.vids||[]).map((s,i)=>`<video src="${s}" onclick="setBig('${id}',${i},1)"></video>`)].join('');
+function media(d,big){const p=d.imgs&&d.imgs[0],v=d.vids&&d.vids[0];
+ if(v&&!p&&big)return `<video src="${esc(v)}" controls playsinline></video>`;
+ return p?`<img src="${esc(p)}" alt="${esc(d.name)}">`:`<span>🐕</span>`}
+function card(d,x){const f=ME.favs.includes(d.id),ok=d.avail&&!d.booked;
+ return `<div class="card" onclick="op('${d.id}')"><div class="media">${media(d)}</div>
+ <button class="fav" onclick="event.stopPropagation();fav('${d.id}')">${f?'💚':'🤍'}</button>
+ <div class="info"><b>${esc(d.name)}</b> · ${esc(d.breed)}<div>📍 ${esc(d.zone)} · 👤 ${esc(dn(d.ownerId))}</div><div>📅 ${dates(d)}</div><div>💶 desde ${eur(d.p10)} / 10 min</div>
+ <span class="tag ${ok?'':'no'}">${d.booked?'Reservado':ok?'Disponible para paseo':'No disponible aún'}</span></div>${x||''}</div>`}
+function op(id){const d=dogs.find(x=>x.id===id);if(!d)return;const own=d.ownerId===me,ok=d.avail&&!d.booked;
+ const th=[...(d.imgs||[]).map((s,i)=>`<img src="${esc(s)}" onclick="big('${id}',${i},0)">`),...(d.vids||[]).map((s,i)=>`<video src="${esc(s)}" onclick="big('${id}',${i},1)"></video>`)].join('');
+ const pr=[['10 min',d.p10],['30 min',d.p30],['1 hora',d.p60]].map(([l,v])=>`<div style="flex:1;text-align:center;background:var(--soft);color:var(--pri2);border-radius:12px;padding:8px"><div style="font-size:12px">${l}</div><b style="font-size:18px">${eur(v)}</b></div>`).join('');
  $('#mbody').innerHTML=`<div class="media" id="big">${media(d,true)}</div>${th?`<div class="thumbs">${th}</div>`:''}
- <div class="body"><h2>${d.name} <small style="color:var(--mut);font-weight:400">${d.breed}</small></h2>
- <p>📍 ${d.zone} · 👤 ${d.owner}<br>📅 ${dates(d)}</p><p>${d.notes||''}</p><div style="display:flex;gap:8px;margin:0 0 12px">${[['10 min',d.p10],['30 min',d.p30],['1 hora',d.p60]].map(([l,v])=>`<div style="flex:1;text-align:center;background:var(--soft);color:var(--pri2);border-radius:12px;padding:8px"><div style="font-size:12px">${l}</div><b style="font-size:18px">${eur(v)}</b></div>`).join('')}</div>
- <div style="display:flex;gap:8px;flex-wrap:wrap">
- ${d.avail&&!d.mine?`<button class="btn" onclick="offer('${id}')">Ofrecerme a pasearlo</button>`:''}
- <button class="btn alt" onclick="toggleFav('${id}');openDog('${id}')">${f?'💚 En favoritos':'🤍 Guardar'}</button>
- ${f?`<button class="btn alt" onclick="toggleAlert('${id}');openDog('${id}')">${S.alerts.includes(id)?'🔔 Aviso activo':'🔕 Avisarme'}</button>`:''}
- ${d.mine?`<button class="btn alt" onclick="setAvail('${id}',${!d.avail});openDog('${id}')">${d.avail?'Marcar no disponible':'Marcar disponible'}</button>`:''}
- <button class="btn alt" onclick="closeM()">Cerrar</button></div></div>`;$('#modal').classList.add('on')}
-function setBig(id,i,v){const d=S.dogs.find(x=>x.id===id);$('#big').innerHTML=v?`<video src="${d.vids[i]}" controls playsinline></video>`:`<img src="${d.imgs[i]}">`}
+ <div class="body"><h2>${esc(d.name)} <small style="color:var(--mut);font-weight:400">${esc(d.breed)}</small></h2>
+ <p>📍 ${esc(d.zone)} · 👤 ${esc(dn(d.ownerId))}<br>📅 ${dates(d)}</p><p>${esc(d.notes)}</p><div style="display:flex;gap:8px;margin-bottom:12px">${pr}</div>
+ ${!own&&ok?`<div class="row"><label>Duración</label><select id="qd"><option value="10">10 min · ${eur(d.p10)}</option><option value="30">30 min · ${eur(d.p30)}</option><option value="60">1 hora · ${eur(d.p60)}</option></select></div>
+ <div style="display:flex;gap:8px" class="row"><div style="flex:1"><label>Día</label><input type="date" id="qdt" value="${esc(d.from)}" min="${esc(d.from)}" max="${esc(d.to||d.from)}"></div><div style="flex:1"><label>Hora</label><input type="time" id="qt"></div></div>
+ <div class="row"><label>Mensaje</label><input id="qm" placeholder="Hola, me encantaría pasear a ${esc(d.name)}"></div>
+ <button class="btn" onclick="sendReq('${id}')">Ofrecerme a pasearlo</button> `:''}
+ <button class="btn alt" onclick="fav('${id}');op('${id}')">${ME.favs.includes(id)?'💚 En favoritos':'🤍 Guardar'}</button>
+ ${ME.favs.includes(id)?`<button class="btn alt" onclick="alrt('${id}');op('${id}')">${ME.alerts.includes(id)?'🔔 Aviso activo':'🔕 Avisarme'}</button>`:''}
+ <button class="btn alt" onclick="closeM()">Cerrar</button></div>`;$('#modal').classList.add('on')}
+function big(id,i,v){const d=dogs.find(x=>x.id===id);$('#big').innerHTML=v?`<video src="${esc(d.vids[i])}" controls playsinline></video>`:`<img src="${esc(d.imgs[i])}">`}
 function closeM(){$('#modal').classList.remove('on')}
 $('#modal').onclick=e=>{if(e.target.id==='modal')closeM()};
-function offer(id){const d=S.dogs.find(x=>x.id===id);closeM();toast(`Solicitud enviada a ${d.owner} 🐾`)}
-function nav(t){S.tab=t;render()}
-function render(){const un=S.notes.length;
- $('#nav').innerHTML=[['home','Inicio'],['up','Subir perro'],['fav','Favoritos'],['mine','Mis perros'],['nt','🔔']].map(([k,l])=>`<button class="${S.tab===k?'on':''}" onclick="nav('${k}')">${l}${k==='nt'&&un?`<span class="badge">${un}</span>`:''}</button>`).join('');
+async function addMsg(r,text,sys,first){await db.doc('msgs/m'+Date.now()+Math.random().toString(36).slice(2,6)).set({req:r,from:me,text,sys:!!sys,first:!!first,t:Date.now()})}
+async function sendReq(id){const d=dogs.find(x=>x.id===id),dur=+$('#qd').value,date=$('#qdt').value,time=$('#qt').value;
+ if(!date||!time){toast('Elige día y hora');return}
+ const rid='r'+Date.now();
+ try{await db.doc('requests/'+rid).set({dogId:id,dogName:d.name,ownerId:d.ownerId,walkerId:me,dur,price:d['p'+dur],date,time,status:'pending',created:Date.now()});
+ await addMsg(rid,$('#qm').value.trim()||'¡Hola! Me gustaría pasear a '+d.name+'.',false,true);closeM();cur=rid;tab='req';render()}catch(e){toast('No se pudo enviar')}}
+async function setSt(id,st,txt){const r=reqs.find(x=>x.id===id);
+ try{if(st==='accepted'){const date=$('#ad').value||r.date,time=$('#at').value||r.time;
+  await db.doc('requests/'+id).update({status:st,date,time,by:me});await db.doc('dogs/'+r.dogId).update({booked:true});txt='✅ Paseo confirmado: '+fmt(date)+' a las '+time;
+  for(const o of reqs.filter(x=>x.dogId===r.dogId&&x.id!==id&&x.status==='pending')){await db.doc('requests/'+o.id).update({status:'rejected',by:me});await addMsg(o.id,'❌ El dueño ya ha reservado este paseo con otra persona.',true)}}
+ else{await db.doc('requests/'+id).update({status:st,by:me});if(st==='cancelled')await db.doc('dogs/'+r.dogId).update({booked:false})}
+ await addMsg(id,txt,true)}catch(e){toast('No se pudo actualizar')}}
+async function send(){const t=$('#mi').value.trim();if(!t)return;$('#mi').value='';await addMsg(cur,t)}
+async function toggleAv(id,v){await db.doc('dogs/'+id).update({avail:v,booked:false})}
+function edit(id){const d=dogs.find(x=>x.id===id);const f=(k,l,t)=>`<div class="row"><label>${l}</label><input id="e${k}" ${t||''} value="${esc(d[k])}"></div>`;
+ $('#mbody').innerHTML=`<div class="body"><h2>Editar a ${esc(d.name)}</h2>${f('name','Nombre')}${f('breed','Raza')}${f('zone','Zona')}
+ <div style="display:flex;gap:8px"><div style="flex:1">${f('from','Desde','type="date"')}</div><div style="flex:1">${f('to','Hasta','type="date"')}</div></div>
+ <div style="display:flex;gap:8px"><div style="flex:1">${f('p10','10 min (€)','type="number" min="0" step="0.5"')}</div><div style="flex:1">${f('p30','30 min (€)','type="number" min="0" step="0.5"')}</div><div style="flex:1">${f('p60','1 hora (€)','type="number" min="0" step="0.5"')}</div></div>
+ <div class="row"><label>Notas</label><textarea id="eno" rows="3">${esc(d.notes)}</textarea></div>
+ <div class="row"><label>Añadir fotos o vídeos</label><input type="file" id="efl" accept="image/*,video/*" multiple></div>
+ <button class="btn" onclick="saveEdit('${id}')">Guardar</button> <button class="btn alt" onclick="closeM()">Cancelar</button></div>`;$('#modal').classList.add('on')}
+async function saveEdit(id){const d=dogs.find(x=>x.id===id),n=$('#ename').value.trim();
+ if(!n||!$('#ep10').value||!$('#ep30').value||!$('#ep60').value){toast('Nombre y precios son obligatorios');return}
+ const u=await upl($('#efl').files);
+ try{await db.doc('dogs/'+id).update({name:n,breed:$('#ebreed').value,zone:$('#ezone').value,from:$('#efrom').value,to:$('#eto').value||$('#efrom').value,p10:$('#ep10').value,p30:$('#ep30').value,p60:$('#ep60').value,notes:$('#eno').value,imgs:[...(d.imgs||[]),...u.imgs],vids:[...(d.vids||[]),...u.vids]});closeM();toast('Cambios guardados ✔')}catch(e){toast('No se pudo guardar')}}
+async function del(id){if(confirm('¿Borrar este perro?'))await db.doc('dogs/'+id).delete()}
+function nav(t){tab=t;cur=null;render()}
+function openReq(id){tab='req';cur=id;render()}
+const ST={pending:'Pendiente',accepted:'Aceptado',rejected:'Rechazado',cancelled:'Cancelado'};
+function thread(){const r=reqs.find(x=>x.id===cur);if(!r)return '<div class="empty">Solicitud no encontrada.</div>';
+ const own=r.ownerId===me,ms=msgs.filter(m=>m.req===cur).sort((a,b)=>a.t-b.t);
+ return `<button class="btn alt" onclick="nav('req')">← Volver</button><h2>${esc(r.dogName)} · ${own?esc(dn(r.walkerId))+' quiere pasearlo':'con '+esc(dn(r.ownerId))}</h2>
+ <p class="sub"><span class="tag ${r.status==='accepted'?'':'no'}">${ST[r.status]}</span> ${r.dur} min · ${eur(r.price)} · propuesto: ${fmt(r.date)} ${esc(r.time)}</p>
+ ${own&&r.status==='pending'?`<div class="bar"><div><label>Día</label><input type="date" id="ad" value="${esc(r.date)}"></div><div><label>Hora</label><input type="time" id="at" value="${esc(r.time)}"></div>
+ <button class="btn" onclick="setSt('${r.id}','accepted')">Aceptar</button><button class="btn red" onclick="setSt('${r.id}','rejected','❌ Solicitud rechazada')">Rechazar</button></div>`:''}
+ ${r.status==='accepted'?`<button class="btn red" onclick="setSt('${r.id}','cancelled','🚫 Paseo cancelado')">Cancelar paseo</button>`:''}
+ <div class="msgs" id="ms">${ms.map(m=>`<div class="m ${m.sys?'sys':m.from===me?'me':''}">${esc(m.text)}</div>`).join('')}</div>
+ <div style="display:flex;gap:8px"><input id="mi" placeholder="Escribe un mensaje…" onkeydown="if(event.key==='Enter')send()"><button class="btn" onclick="send()">Enviar</button></div>`}
+function render(){
+ const mi=$('#mi')&&$('#mi').value,mine=r=>r.ownerId===me||r.walkerId===me;
+ const pend=reqs.filter(r=>r.ownerId===me&&r.status==='pending').length;
+ $('#nav').innerHTML=[['home','Inicio'],['up','Subir perro'],['fav','Favoritos'],['mine','Mis perros'],['req','Solicitudes'],['cal','Calendario'],['nt','🔔']].map(([k,l])=>{const n=k==='req'?pend:k==='nt'?ME.notes.length:0;return `<button class="${tab===k?'on':''}" onclick="nav('${k}')">${l}${n?`<span class="badge">${n}</span>`:''}</button>`}).join('');
  const a=$('#app');
- if(S.tab==='home'){const zs=[...new Set(S.dogs.map(d=>d.zone))];
-  let l=S.dogs.filter(d=>d.avail&&!d.mine);
-  if(S.fd)l=l.filter(d=>!d.from||(d.from<=S.fd&&S.fd<=(d.to||d.from)));
-  if(S.fz)l=l.filter(d=>d.zone===S.fz);
+ if(!db||!user){a.innerHTML='<div class="empty">Esta app guarda los datos compartidos en tu cuenta de Claude. Ábrela desde claude.ai con tu sesión iniciada.</div>';return}
+ if(tab==='home'){const zs=[...new Set(dogs.map(d=>d.zone))];
+  let l=dogs.filter(d=>d.avail&&!d.booked&&d.ownerId!==me);
+  if(fd)l=l.filter(d=>!d.from||(d.from<=fd&&fd<=(d.to||d.from)));if(fz)l=l.filter(d=>d.zone===fz);
+  const nx=dogs.filter(d=>!d.avail&&!d.booked&&d.ownerId!==me);
   a.innerHTML=`<h2>Perros que necesitan paseo</h2><p class="sub">Ayuda a un vecino con poco tiempo y disfruta de un paseo con un nuevo amigo.</p>
-  <div class="bar"><div><label>Fecha</label><input type="date" id="fd" value="${S.fd}"></div>
-  <div><label>Zona</label><select id="fz"><option value="">Todas</option>${zs.map(z=>`<option ${z===S.fz?'selected':''}>${z}</option>`).join('')}</select></div>
-  <button class="btn" onclick="S.fd=$('#fd').value;S.fz=$('#fz').value;render()">Buscar</button>
-  <button class="btn alt" onclick="S.fd='';S.fz='';render()">Limpiar</button></div>
-  <div class="grid">${l.map(card).join('')||'<div class="empty">No hay perros para esa fecha. Guarda alguno en favoritos y te avisaremos.</div>'}</div>
-  <h2 style="margin-top:24px">Próximamente disponibles</h2><div class="grid">${S.dogs.filter(d=>!d.avail&&!d.mine).map(card).join('')}</div>`}
- if(S.tab==='up')a.innerHTML=`<h2>Sube a tu perro</h2><p class="sub">Añade fotos, vídeos y las fechas en las que necesitas que lo paseen.</p>
-  <div class="panel"><div class="row"><label>Nombre</label><input id="n"></div><div class="row"><label>Raza</label><input id="b"></div>
-  <div class="row"><label>Tu nombre</label><input id="o"></div><div class="row"><label>Zona</label><input id="z" placeholder="Ej. Santa Catalina"></div>
+  <div class="bar"><div><label>Fecha</label><input type="date" id="fd" value="${fd}"></div><div><label>Zona</label><select id="fz"><option value="">Todas</option>${zs.map(z=>`<option ${z===fz?'selected':''}>${esc(z)}</option>`).join('')}</select></div>
+  <button class="btn" onclick="fd=$('#fd').value;fz=$('#fz').value;render()">Buscar</button><button class="btn alt" onclick="fd='';fz='';render()">Limpiar</button></div>
+  <div class="grid">${l.map(d=>card(d)).join('')||'<div class="empty">Aún no hay perros para esa búsqueda. ¡Sube el tuyo o guarda alguno en favoritos!</div>'}</div>
+  ${nx.length?`<h2 style="margin-top:24px">Próximamente disponibles</h2><div class="grid">${nx.map(d=>card(d)).join('')}</div>`:''}`}
+ if(tab==='up')a.innerHTML=`<h2>Sube a tu perro</h2><p class="sub">Añade fotos, vídeos, fechas y lo que pagarías por el paseo.</p>
+  <div class="panel"><div class="row"><label>Nombre</label><input id="n"></div><div class="row"><label>Raza</label><input id="b"></div><div class="row"><label>Zona</label><input id="z" placeholder="Ej. Santa Catalina"></div>
   <div class="row"><label><input type="checkbox" id="nd" style="width:auto" onchange="$('#dr').style.display=this.checked?'none':'flex'"> Sin fecha concreta</label>
   <div id="dr" style="display:flex;gap:8px"><div style="flex:1"><label>Desde</label><input type="date" id="f"></div><div style="flex:1"><label>Hasta</label><input type="date" id="t"></div></div></div>
-  <div class="row"><label>Precio que estás dispuesto a pagar (€)</label><div style="display:flex;gap:8px"><div style="flex:1"><label>10 min</label><input type="number" id="p10" min="0" step="0.5" placeholder="3"></div><div style="flex:1"><label>30 min</label><input type="number" id="p30" min="0" step="0.5" placeholder="7"></div><div style="flex:1"><label>1 hora</label><input type="number" id="p60" min="0" step="0.5" placeholder="12"></div></div></div>
+  <div class="row"><label>Precio que pagarías (€)</label><div style="display:flex;gap:8px"><div style="flex:1"><label>10 min</label><input type="number" id="p10" min="0" step="0.5" placeholder="3"></div><div style="flex:1"><label>30 min</label><input type="number" id="p30" min="0" step="0.5" placeholder="7"></div><div style="flex:1"><label>1 hora</label><input type="number" id="p60" min="0" step="0.5" placeholder="12"></div></div></div>
   <div class="row"><label>Notas para el paseador</label><textarea id="no" rows="3"></textarea></div>
   <div class="row"><label>Fotos y vídeos</label><input type="file" id="fl" accept="image/*,video/*" multiple></div>
-  <button class="btn" onclick="addDog()">Publicar perro</button></div>`;
- if(S.tab==='fav'){const l=S.dogs.filter(d=>S.favs.includes(d.id));
-  a.innerHTML=`<h2>Tus favoritos</h2><p class="sub">Activa 🔔 en cada perro para recibir un aviso cuando esté disponible.</p>
-  <div class="grid">${l.map(d=>card(d).replace('</div></div>',`</div><div style="padding:0 12px 12px"><button class="btn alt" onclick="event.stopPropagation();toggleAlert('${d.id}')">${S.alerts.includes(d.id)?'🔔 Aviso activo':'🔕 Avisarme'}</button>${!d.avail?` <button class="btn alt" onclick="event.stopPropagation();setAvail('${d.id}',true)" title="Demo">▶ Simular</button>`:''}</div></div>`)).join('')||'<div class="empty">Aún no tienes favoritos. Pulsa 🤍 en cualquier perro.</div>'}</div>`}
- if(S.tab==='mine'){const l=S.dogs.filter(d=>d.mine);a.innerHTML=`<h2>Mis perros</h2><div class="grid">${l.map(card).join('')||'<div class="empty">Todavía no has subido ningún perro.</div>'}</div>`}
- if(S.tab==='nt')a.innerHTML=`<h2>Notificaciones</h2>${S.notes.map(n=>`<div class="note">${n.msg}<div style="color:var(--mut);font-size:12px">${n.t}</div></div>`).join('')||'<div class="empty">Sin avisos todavía.</div>'}${S.notes.length?'<button class="btn alt" onclick="S.notes=[];save();render()">Borrar todo</button>':''}`}
-function shrink(f){return new Promise(r=>{const i=new Image();i.onload=()=>{const k=Math.min(1,640/i.width),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',.7))};i.onerror=()=>r(null);i.src=URL.createObjectURL(f)})}
+  <button class="btn" id="pb" onclick="addDog()">Publicar perro</button></div>`;
+ if(tab==='fav'){const l=dogs.filter(d=>ME.favs.includes(d.id));
+  a.innerHTML=`<h2>Tus favoritos</h2><p class="sub">Te avisamos cuando uno de ellos pase a estar disponible.</p><div class="grid">${l.map(d=>card(d,`<div style="padding:0 12px 12px"><button class="btn alt" onclick="event.stopPropagation();alrt('${d.id}')">${ME.alerts.includes(d.id)?'🔔 Aviso activo':'🔕 Avisarme'}</button></div>`)).join('')||'<div class="empty">Aún no tienes favoritos. Pulsa 🤍 en cualquier perro.</div>'}</div>`}
+ if(tab==='mine'){const l=dogs.filter(d=>d.ownerId===me);a.innerHTML=`<h2>Mis perros</h2><div class="grid">${l.map(d=>card(d,`<div style="padding:0 12px 12px;display:flex;gap:6px"><button class="btn alt" onclick="event.stopPropagation();toggleAv('${d.id}',${!d.avail})">${d.avail?'Pausar':'Publicar'}</button><button class="btn alt" onclick="event.stopPropagation();edit('${d.id}')">✏️</button><button class="btn alt" onclick="event.stopPropagation();del('${d.id}')">🗑</button></div>`)).join('')||'<div class="empty">Todavía no has subido ningún perro.</div>'}</div>`}
+ if(tab==='req'){if(cur)a.innerHTML=thread();else{const l=reqs.filter(mine).sort((x,y)=>y.created-x.created);
+  a.innerHTML=`<h2>Solicitudes</h2><p class="sub">Ofertas que has enviado y recibido.</p>${l.map(r=>`<div class="note" onclick="openReq('${r.id}')"><b>${esc(r.dogName)}</b> · ${r.ownerId===me?esc(dn(r.walkerId))+' quiere pasearlo':'Tú te ofreces ('+esc(dn(r.ownerId))+')'}<div style="color:var(--mut);font-size:13px">${ST[r.status]} · ${r.dur} min · ${eur(r.price)} · ${fmt(r.date)} ${esc(r.time)}</div></div>`).join('')||'<div class="empty">Sin solicitudes todavía. Abre un perro y pulsa «Ofrecerme a pasearlo».</div>'}`}}
+ if(tab==='cal'){const l=reqs.filter(r=>mine(r)&&r.status==='accepted').sort((x,y)=>(x.date+x.time).localeCompare(y.date+y.time));
+  a.innerHTML=`<h2>Calendario</h2><p class="sub">Tus paseos confirmados.</p>${l.map(r=>`<div class="note" onclick="openReq('${r.id}')"><b>${fmt(r.date)} · ${esc(r.time)}</b><div>${r.walkerId===me?'Pasearás a '+esc(r.dogName):esc(dn(r.walkerId))+' pasea a '+esc(r.dogName)} · ${r.dur} min · ${eur(r.price)}</div></div>`).join('')||'<div class="empty">No tienes paseos confirmados.</div>'}`}
+ if(tab==='nt')a.innerHTML=`<h2>Notificaciones</h2>${ME.notes.map(n=>`<div class="note">${esc(n.msg)}<div style="color:var(--mut);font-size:12px">${esc(n.t)}</div></div>`).join('')||'<div class="empty">Sin avisos todavía.</div>'}${ME.notes.length?'<button class="btn alt" onclick="ME.notes=[];sp();render()">Borrar todo</button>':''}`;
+ if(cur&&tab==='req'){const i=$('#mi');if(i&&mi){i.value=mi;i.focus()}const m=$('#ms');if(m)m.scrollTop=m.scrollHeight}}
+function shrink(f){return new Promise(r=>{const i=new Image();i.onload=()=>{const k=Math.min(1,480/i.width),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',.6))};i.onerror=()=>r(null);i.src=URL.createObjectURL(f)})}
+async function upl(files){const imgs=[],vids=[];
+ for(const f of files){const v=f.type.startsWith('video');try{if(assets){(v?vids:imgs).push((await assets.upload(f)).url)}else if(!v){const s=await shrink(f);if(s)imgs.push(s)}}catch(e){if(!v&&imgs.length<3){const s=await shrink(f);if(s)imgs.push(s)}}}
+ return{imgs,vids}}
 async function addDog(){const n=$('#n').value.trim();if(!n){toast('Pon un nombre');return}
  if(!$('#p10').value||!$('#p30').value||!$('#p60').value){toast('Indica el precio para 10 min, 30 min y 1 hora');return}
- const nd=$('#nd').checked,imgs=[],vids=[];
- for(const f of $('#fl').files){if(f.type.startsWith('video'))vids.push(URL.createObjectURL(f));else{const s=await shrink(f);if(s)imgs.push(s)}}
- const d={id:'m'+Date.now(),mine:true,name:n,breed:$('#b').value||'Mestizo',owner:$('#o').value||'Yo',zone:$('#z').value||'Palma',from:nd?'':$('#f').value,to:nd?'':($('#t').value||$('#f').value),avail:true,notes:$('#no').value,emoji:'🐕',p10:$('#p10').value,p30:$('#p30').value,p60:$('#p60').value,imgs,vids};
- S.dogs.unshift(d);save();S.tab='mine';render();toast(vids.length?'Publicado ✔ (los vídeos solo se guardan durante esta sesión)':'¡Perro publicado! ✔')}
-load();render();
+ $('#pb').disabled=true;const nd=$('#nd').checked,{imgs,vids}=await upl($('#fl').files);
+ const id='d'+Date.now();
+ try{await db.doc('dogs/'+id).set({ownerId:me,name:n,breed:$('#b').value||'Mestizo',zone:$('#z').value||'Palma',from:nd?'':$('#f').value,to:nd?'':($('#t').value||$('#f').value),avail:true,booked:false,notes:$('#no').value,p10:$('#p10').value,p30:$('#p30').value,p60:$('#p60').value,imgs,vids,created:Date.now()});tab='mine';render();toast('¡Perro publicado! ✔')}
+ catch(e){toast('No se pudo publicar (fotos demasiado grandes?)');$('#pb').disabled=false}}
+render();init();
 </script>
 </body>
 </html>
