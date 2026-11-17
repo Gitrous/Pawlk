@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PaseoYa – Paseos para tu perro</title>
+<style>
+:root{--bg:#f4faf5;--card:#fff;--ink:#16301f;--mut:#5d7565;--pri:#2e9e55;--pri2:#1f7a41;--soft:#dff3e5;--line:#d3e6d9;--warn:#e8a33d;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1a12;--card:#16261c;--ink:#e6f4ea;--mut:#9ab5a2;--pri:#3dbb6a;--pri2:#2e9e55;--soft:#1d3a28;--line:#27402f}}
+:root[data-theme="dark"]{--bg:#0e1a12;--card:#16261c;--ink:#e6f4ea;--mut:#9ab5a2;--pri:#3dbb6a;--pri2:#2e9e55;--soft:#1d3a28;--line:#27402f}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.4}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:10px 16px;flex-wrap:wrap}
+.logo{font-weight:800;font-size:20px;color:var(--pri);margin-right:auto}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav button{border:0;background:none;color:var(--mut);padding:8px 12px;border-radius:20px;font:inherit;font-weight:600;cursor:pointer;position:relative}
+nav button.on{background:var(--soft);color:var(--pri2)}
+.badge{position:absolute;top:0;right:0;background:#e5484d;color:#fff;border-radius:10px;font-size:11px;padding:0 5px}
+main{max-width:1000px;margin:0 auto;padding:16px}
+h2{margin:8px 0 4px}p.sub{color:var(--mut);margin:0 0 14px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:end;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:16px}
+label{font-size:12px;font-weight:700;color:var(--mut);display:block;margin-bottom:3px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;width:100%}
+.bar>div{flex:1;min-width:130px}
+.btn{background:var(--pri);color:#fff;border:0;border-radius:12px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer}
+.btn:hover{background:var(--pri2)}.btn.alt{background:var(--soft);color:var(--pri2)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;cursor:pointer;position:relative}
+.media{aspect-ratio:4/3;background:linear-gradient(135deg,var(--soft),var(--pri));display:flex;align-items:center;justify-content:center;font-size:64px;overflow:hidden}
+.media img,.media video{width:100%;height:100%;object-fit:cover}
+.info{padding:10px 12px}.info b{font-size:16px}.info div{color:var(--mut);font-size:13px}
+.tag{display:inline-block;background:var(--soft);color:var(--pri2);border-radius:8px;padding:2px 8px;font-size:12px;font-weight:700;margin-top:6px}
+.tag.no{background:#fbeccf;color:#8a5a0a}
+.fav{position:absolute;top:8px;right:8px;background:var(--card);border:0;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;max-width:560px}
+.panel .row{margin-bottom:12px}
+.modal{position:fixed;inset:0;background:#0007;display:none;align-items:center;justify-content:center;z-index:20;padding:16px}
+.modal.on{display:flex}.modal>div{background:var(--card);border-radius:20px;max-width:520px;width:100%;max-height:90vh;overflow:auto}
+.modal .media{aspect-ratio:16/10}.modal .body{padding:16px}
+.thumbs{display:flex;gap:6px;overflow-x:auto;padding:8px 16px 0}.thumbs>*{width:56px;height:56px;border-radius:8px;object-fit:cover;cursor:pointer;flex:none}
+.note{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--pri);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.empty{color:var(--mut);padding:30px;text-align:center}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--pri2);color:#fff;padding:10px 16px;border-radius:12px;display:none;z-index:30}
+</style>
+</head>
+<body>
+<header>
+<span class="logo">🐾 PaseoYa</span>
+<nav id="nav"></nav>
+</header>
+<main id="app"></main>
+<div class="modal" id="modal"><div id="mbody"></div></div>
+<div class="toast" id="toast"></div>
+<script>
+const $=s=>document.querySelector(s);
+const SAMPLE=[
+{id:'s1',name:'Luna',breed:'Labrador',owner:'Marta',zone:'Santa Catalina',from:'2026-11-18',to:'2026-11-20',avail:true,notes:'Muy cariñosa, tira poco de la correa. Necesita 45 min.',emoji:'🐕'},
+{id:'s2',name:'Toby',breed:'Beagle',owner:'Jordi',zone:'Portixol',from:'2026-11-19',to:'2026-11-19',avail:true,notes:'Mucha energía. Le encanta olfatear.',emoji:'🐶'},
+{id:'s3',name:'Nala',breed:'Border Collie',owner:'Carla',zone:'El Terreno',from:'',to:'',avail:true,notes:'Disponible cualquier tarde.',emoji:'🦮'},
+{id:'s4',name:'Rocky',breed:'Bulldog francés',owner:'Pau',zone:'Son Armadans',from:'2026-11-22',to:'2026-11-24',avail:false,notes:'Paseos cortos, no soporta el calor.',emoji:'🐩'},
+{id:'s5',name:'Kira',breed:'Husky',owner:'Ana',zone:'Palma centro',from:'2026-11-21',to:'2026-11-23',avail:false,notes:'Necesita paseo largo y activo.',emoji:'🐺'}];
+[[3,7,12],[2,5,9],[4,8,14],[3,6,10],[5,10,18]].forEach((p,i)=>Object.assign(SAMPLE[i],{p10:p[0],p30:p[1],p60:p[2]}));
+let S={dogs:[],favs:[],alerts:[],notes:[],tab:'home',fd:'',fz:''};
+function load(){try{const j=JSON.parse(localStorage.getItem('paseoya')||'null');if(j)S={...S,...j}}catch(e){}
+ const mine=S.dogs.filter(d=>d.mine);S.dogs=[...mine,...SAMPLE.map(d=>({...d,...(S.dogs.find(x=>x.id===d.id)||{})}))]}
+function save(){try{localStorage.setItem('paseoya',JSON.stringify({dogs:S.dogs.map(d=>({...d,vids:undefined})),favs:S.favs,alerts:S.alerts,notes:S.notes}))}catch(e){}}
+function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',2200)}
+function notify(msg){S.notes.unshift({msg,t:new Date().toLocaleString('es-ES')});save();toast('🔔 '+msg);
+ try{if('Notification' in window&&Notification.permission==='granted')new Notification('PaseoYa',{body:msg})}catch(e){}render()}
+const fmt=d=>d?new Date(d+'T00:00').toLocaleDateString('es-ES',{day:'numeric',month:'short'}):'';
+const dates=d=>d.from?(d.to&&d.to!==d.from?fmt(d.from)+' – '+fmt(d.to):fmt(d.from)):'Sin fecha fija';
+function media(d,big){const p=(d.imgs&&d.imgs[0]);const v=(d.vids&&d.vids[0]);
+ if(v&&!p&&big)return `<video src="${v}" controls playsinline></video>`;
+ return p?`<img src="${p}" alt="${d.name}">`:`<span>${d.emoji||'🐕'}</span>`}
+const eur=n=>(n===''||n==null)?'–':n+' €';
+const price=d=>`${eur(d.p10)} / 10 min · ${eur(d.p30)} / 30 min · ${eur(d.p60)} / 1 h`;
+function card(d){const f=S.favs.includes(d.id);
+ return `<div class="card" onclick="openDog('${d.id}')"><div class="media">${media(d)}</div>
+ <button class="fav" onclick="event.stopPropagation();toggleFav('${d.id}')" title="Favorito">${f?'💚':'🤍'}</button>
+ <div class="info"><b>${d.name}</b> · ${d.breed}<div>📍 ${d.zone} · 👤 ${d.owner}</div><div>📅 ${dates(d)}</div><div>💶 desde ${eur(d.p10)} / 10 min</div>
+ <span class="tag ${d.avail?'':'no'}">${d.avail?'Disponible para paseo':'No disponible aún'}</span></div></div>`}
+function toggleFav(id){const i=S.favs.indexOf(id);if(i<0){S.favs.push(id);if(!S.alerts.includes(id))S.alerts.push(id);toast('Guardado en favoritos · te avisaremos 🔔')}else{S.favs.splice(i,1)}save();render()}
+function toggleAlert(id){const i=S.alerts.indexOf(id);i<0?S.alerts.push(id):S.alerts.splice(i,1);save();render();
+ if(i<0&&'Notification' in window&&Notification.permission==='default')Notification.requestPermission()}
+function setAvail(id,v){const d=S.dogs.find(x=>x.id===id);d.avail=v;save();
+ if(v&&S.alerts.includes(id))notify(`¡${d.name} ya está disponible para pasear! ${dates(d)}`);else render()}
+function openDog(id){const d=S.dogs.find(x=>x.id===id);const f=S.favs.includes(id);
+ const th=[...(d.imgs||[]).map((s,i)=>`<img src="${s}" onclick="setBig('${id}',${i},0)">`),...(d.vids||[]).map((s,i)=>`<video src="${s}" onclick="setBig('${id}',${i},1)"></video>`)].join('');
+ $('#mbody').innerHTML=`<div class="media" id="big">${media(d,true)}</div>${th?`<div class="thumbs">${th}</div>`:''}
+ <div class="body"><h2>${d.name} <small style="color:var(--mut);font-weight:400">${d.breed}</small></h2>
+ <p>📍 ${d.zone} · 👤 ${d.owner}<br>📅 ${dates(d)}</p><p>${d.notes||''}</p><div style="display:flex;gap:8px;margin:0 0 12px">${[['10 min',d.p10],['30 min',d.p30],['1 hora',d.p60]].map(([l,v])=>`<div style="flex:1;text-align:center;background:var(--soft);color:var(--pri2);border-radius:12px;padding:8px"><div style="font-size:12px">${l}</div><b style="font-size:18px">${eur(v)}</b></div>`).join('')}</div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap">
+ ${d.avail&&!d.mine?`<button class="btn" onclick="offer('${id}')">Ofrecerme a pasearlo</button>`:''}
+ <button class="btn alt" onclick="toggleFav('${id}');openDog('${id}')">${f?'💚 En favoritos':'🤍 Guardar'}</button>
+ ${f?`<button class="btn alt" onclick="toggleAlert('${id}');openDog('${id}')">${S.alerts.includes(id)?'🔔 Aviso activo':'🔕 Avisarme'}</button>`:''}
+ ${d.mine?`<button class="btn alt" onclick="setAvail('${id}',${!d.avail});openDog('${id}')">${d.avail?'Marcar no disponible':'Marcar disponible'}</button>`:''}
+ <button class="btn alt" onclick="closeM()">Cerrar</button></div></div>`;$('#modal').classList.add('on')}
+function setBig(id,i,v){const d=S.dogs.find(x=>x.id===id);$('#big').innerHTML=v?`<video src="${d.vids[i]}" controls playsinline></video>`:`<img src="${d.imgs[i]}">`}
+function closeM(){$('#modal').classList.remove('on')}
+$('#modal').onclick=e=>{if(e.target.id==='modal')closeM()};
+function offer(id){const d=S.dogs.find(x=>x.id===id);closeM();toast(`Solicitud enviada a ${d.owner} 🐾`)}
+function nav(t){S.tab=t;render()}
+function render(){const un=S.notes.length;
+ $('#nav').innerHTML=[['home','Inicio'],['up','Subir perro'],['fav','Favoritos'],['mine','Mis perros'],['nt','🔔']].map(([k,l])=>`<button class="${S.tab===k?'on':''}" onclick="nav('${k}')">${l}${k==='nt'&&un?`<span class="badge">${un}</span>`:''}</button>`).join('');
+ const a=$('#app');
+ if(S.tab==='home'){const zs=[...new Set(S.dogs.map(d=>d.zone))];
+  let l=S.dogs.filter(d=>d.avail&&!d.mine);
+  if(S.fd)l=l.filter(d=>!d.from||(d.from<=S.fd&&S.fd<=(d.to||d.from)));
+  if(S.fz)l=l.filter(d=>d.zone===S.fz);
+  a.innerHTML=`<h2>Perros que necesitan paseo</h2><p class="sub">Ayuda a un vecino con poco tiempo y disfruta de un paseo con un nuevo amigo.</p>
+  <div class="bar"><div><label>Fecha</label><input type="date" id="fd" value="${S.fd}"></div>
+  <div><label>Zona</label><select id="fz"><option value="">Todas</option>${zs.map(z=>`<option ${z===S.fz?'selected':''}>${z}</option>`).join('')}</select></div>
+  <button class="btn" onclick="S.fd=$('#fd').value;S.fz=$('#fz').value;render()">Buscar</button>
+  <button class="btn alt" onclick="S.fd='';S.fz='';render()">Limpiar</button></div>
+  <div class="grid">${l.map(card).join('')||'<div class="empty">No hay perros para esa fecha. Guarda alguno en favoritos y te avisaremos.</div>'}</div>
+  <h2 style="margin-top:24px">Próximamente disponibles</h2><div class="grid">${S.dogs.filter(d=>!d.avail&&!d.mine).map(card).join('')}</div>`}
+ if(S.tab==='up')a.innerHTML=`<h2>Sube a tu perro</h2><p class="sub">Añade fotos, vídeos y las fechas en las que necesitas que lo paseen.</p>
+  <div class="panel"><div class="row"><label>Nombre</label><input id="n"></div><div class="row"><label>Raza</label><input id="b"></div>
+  <div class="row"><label>Tu nombre</label><input id="o"></div><div class="row"><label>Zona</label><input id="z" placeholder="Ej. Santa Catalina"></div>
+  <div class="row"><label><input type="checkbox" id="nd" style="width:auto" onchange="$('#dr').style.display=this.checked?'none':'flex'"> Sin fecha concreta</label>
+  <div id="dr" style="display:flex;gap:8px"><div style="flex:1"><label>Desde</label><input type="date" id="f"></div><div style="flex:1"><label>Hasta</label><input type="date" id="t"></div></div></div>
+  <div class="row"><label>Precio que estás dispuesto a pagar (€)</label><div style="display:flex;gap:8px"><div style="flex:1"><label>10 min</label><input type="number" id="p10" min="0" step="0.5" placeholder="3"></div><div style="flex:1"><label>30 min</label><input type="number" id="p30" min="0" step="0.5" placeholder="7"></div><div style="flex:1"><label>1 hora</label><input type="number" id="p60" min="0" step="0.5" placeholder="12"></div></div></div>
+  <div class="row"><label>Notas para el paseador</label><textarea id="no" rows="3"></textarea></div>
+  <div class="row"><label>Fotos y vídeos</label><input type="file" id="fl" accept="image/*,video/*" multiple></div>
+  <button class="btn" onclick="addDog()">Publicar perro</button></div>`;
+ if(S.tab==='fav'){const l=S.dogs.filter(d=>S.favs.includes(d.id));
+  a.innerHTML=`<h2>Tus favoritos</h2><p class="sub">Activa 🔔 en cada perro para recibir un aviso cuando esté disponible.</p>
+  <div class="grid">${l.map(d=>card(d).replace('</div></div>',`</div><div style="padding:0 12px 12px"><button class="btn alt" onclick="event.stopPropagation();toggleAlert('${d.id}')">${S.alerts.includes(d.id)?'🔔 Aviso activo':'🔕 Avisarme'}</button>${!d.avail?` <button class="btn alt" onclick="event.stopPropagation();setAvail('${d.id}',true)" title="Demo">▶ Simular</button>`:''}</div></div>`)).join('')||'<div class="empty">Aún no tienes favoritos. Pulsa 🤍 en cualquier perro.</div>'}</div>`}
+ if(S.tab==='mine'){const l=S.dogs.filter(d=>d.mine);a.innerHTML=`<h2>Mis perros</h2><div class="grid">${l.map(card).join('')||'<div class="empty">Todavía no has subido ningún perro.</div>'}</div>`}
+ if(S.tab==='nt')a.innerHTML=`<h2>Notificaciones</h2>${S.notes.map(n=>`<div class="note">${n.msg}<div style="color:var(--mut);font-size:12px">${n.t}</div></div>`).join('')||'<div class="empty">Sin avisos todavía.</div>'}${S.notes.length?'<button class="btn alt" onclick="S.notes=[];save();render()">Borrar todo</button>':''}`}
+function shrink(f){return new Promise(r=>{const i=new Image();i.onload=()=>{const k=Math.min(1,640/i.width),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',.7))};i.onerror=()=>r(null);i.src=URL.createObjectURL(f)})}
+async function addDog(){const n=$('#n').value.trim();if(!n){toast('Pon un nombre');return}
+ if(!$('#p10').value||!$('#p30').value||!$('#p60').value){toast('Indica el precio para 10 min, 30 min y 1 hora');return}
+ const nd=$('#nd').checked,imgs=[],vids=[];
+ for(const f of $('#fl').files){if(f.type.startsWith('video'))vids.push(URL.createObjectURL(f));else{const s=await shrink(f);if(s)imgs.push(s)}}
+ const d={id:'m'+Date.now(),mine:true,name:n,breed:$('#b').value||'Mestizo',owner:$('#o').value||'Yo',zone:$('#z').value||'Palma',from:nd?'':$('#f').value,to:nd?'':($('#t').value||$('#f').value),avail:true,notes:$('#no').value,emoji:'🐕',p10:$('#p10').value,p30:$('#p30').value,p60:$('#p60').value,imgs,vids};
+ S.dogs.unshift(d);save();S.tab='mine';render();toast(vids.length?'Publicado ✔ (los vídeos solo se guardan durante esta sesión)':'¡Perro publicado! ✔')}
+load();render();
+</script>
+</body>
+</html>
