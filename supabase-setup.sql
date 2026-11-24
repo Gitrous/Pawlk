@@ -29,8 +29,8 @@ language sql stable as $$
   select auth.uid() is not null and case
     when split_part(p,'/',1) = 'data'
       then split_part(p,'/',2) = 'users' and split_part(p,'/',3) = auth.uid()::text   -- espacio privado
-    when split_part(p,'/',1) = 'flags'
-      then split_part(p,'/',2) = auth.uid()::text or public.is_admin()                -- denuncias: solo admin
+    when split_part(p,'/',1) in ('flags','consents')
+      then split_part(p,'/',2) = auth.uid()::text or public.is_admin()                -- denuncias y consentimientos: solo el autor y el admin
     when split_part(p,'/',1) in ('profiles','pubkeys','dogs','offers','answers','chats','reviews','verified','mod')
       then true
     else false end
@@ -44,7 +44,7 @@ language sql stable as $$
       then split_part(p,'/',2) = 'users' and split_part(p,'/',3) = auth.uid()::text
     when split_part(p,'/',1) in ('verified','mod')
       then public.is_admin()
-    when split_part(p,'/',1) in ('profiles','pubkeys','dogs','offers','answers','chats','reviews','flags')
+    when split_part(p,'/',1) in ('profiles','pubkeys','dogs','offers','answers','chats','reviews','flags','consents')
       then split_part(p,'/',2) = auth.uid()::text
     else false end
 $$;
@@ -63,7 +63,10 @@ create policy admins_self on public.admins for select to authenticated
   using (lower(email) = lower(coalesce(auth.jwt() ->> 'email', '')));
 
 -- 5) Tiempo real
-alter publication supabase_realtime add table public.docs;
+do $$ begin
+  alter publication supabase_realtime add table public.docs;
+exception when duplicate_object then null;
+end $$;
 
 -- 6) Fotos y vídeos (bucket público de lectura; cada persona sube solo a su carpeta)
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -77,5 +80,21 @@ create policy pawlk_upload on storage.objects for insert to authenticated
 create policy pawlk_delete on storage.objects for delete to authenticated
   using (bucket_id = 'pawlk' and (storage.foldername(name))[1] = auth.uid()::text);
 
--- 7) Tu cuenta de administrador (verificar perfiles y moderar)
+-- 7) Borrar mi cuenta (derecho de supresión): elimina mis datos y mi usuario
+create or replace function public.delete_my_account() returns void
+language plpgsql security definer set search_path = public, auth as $$
+declare u text := auth.uid()::text;
+begin
+  if auth.uid() is null then raise exception 'not authenticated'; end if;
+  delete from public.docs where
+       (split_part(path,'/',1) in ('profiles','pubkeys','dogs','offers','answers','chats','reviews','flags','consents')
+         and split_part(path,'/',2) = u)
+    or (split_part(path,'/',1) = 'data' and split_part(path,'/',2) = 'users' and split_part(path,'/',3) = u)
+    or path = 'verified/' || u;
+  delete from auth.users where id = auth.uid();
+end $$;
+revoke all on function public.delete_my_account() from public, anon;
+grant execute on function public.delete_my_account() to authenticated;
+
+-- 8) Tu cuenta de administrador (verificar perfiles y moderar)
 insert into public.admins (email) values ('TU_CORREO') on conflict do nothing;
