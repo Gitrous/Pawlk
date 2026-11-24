@@ -48,7 +48,7 @@ consentimientos y la función «Borrar mi cuenta».
 - Cada persona solo puede escribir en sus propios datos (perros, ofertas, chats, perfil…) — lo impone la base de datos.
 - Chats, fechas, precios, partes y datos de emergencia van **cifrados de extremo a extremo** (clave por navegador).
 - Solo los administradores (tabla `admins`) pueden verificar perfiles, moderar y leer denuncias y consentimientos.
-- Cada persona puede exportar sus datos y borrar su cuenta desde su perfil (👤). Al entrar por primera vez debe aceptar los términos y confirmar que es mayor de 18 años; se guarda versión y fecha.
+- Cada persona puede exportar sus datos y borrar su cuenta desde su perfil (👤). Al entrar por primera vez debe aceptar los términos y confirmar que tiene 14 años o más; se guarda versión y fecha.
 - Las fotos y vídeos se guardan en el bucket público `pawlk` (cualquiera con el enlace puede verlas).
 
 ## Límites conocidos
