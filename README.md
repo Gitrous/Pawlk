@@ -34,10 +34,21 @@ Framework: **None** · Build command: *(vacío)* · Output directory: **/** . Ca
 Abre tu web, entra con tu correo y revisa que puedes subir un perro. Con el correo del paso 1 verás en 👤 el panel de moderación
 y el botón «Marcar como verificado» en los perfiles.
 
+## 5b. Datos legales (obligatorio antes de abrirla al público)
+En `config.js`, bloque `LEGAL`, rellena: `NAME`, `NIF`, `ADDRESS`, `CITY`, `EMAIL` y `RETENTION`.
+Mientras falte alguno, los textos muestran «COMPLETAR …» resaltado y un aviso de borrador.
+Los textos (Términos, Privacidad, Normas, Consejos de seguridad) están en la app y en `legal.html` (enlázalo desde tu dominio).
+**Son un borrador orientativo: que los revise un abogado** (RGPD/LOPDGDD, servicios de la sociedad de la información, consumo,
+fiscalidad, responsabilidad civil y seguro). Cuando los revise, pon `REVIEWED: true` para quitar el aviso.
+
+Si ya habías ejecutado `supabase-setup.sql`, **vuelve a ejecutarlo entero** (es seguro repetirlo): añade el registro de
+consentimientos y la función «Borrar mi cuenta».
+
 ## Qué protege cada cosa
 - Cada persona solo puede escribir en sus propios datos (perros, ofertas, chats, perfil…) — lo impone la base de datos.
 - Chats, fechas, precios, partes y datos de emergencia van **cifrados de extremo a extremo** (clave por navegador).
-- Solo los administradores (tabla `admins`) pueden verificar perfiles, moderar y leer denuncias.
+- Solo los administradores (tabla `admins`) pueden verificar perfiles, moderar y leer denuncias y consentimientos.
+- Cada persona puede exportar sus datos y borrar su cuenta desde su perfil (👤). Al entrar por primera vez debe aceptar los términos y confirmar que es mayor de 18 años; se guarda versión y fecha.
 - Las fotos y vídeos se guardan en el bucket público `pawlk` (cualquiera con el enlace puede verlas).
 
 ## Límites conocidos
